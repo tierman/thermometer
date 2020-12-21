@@ -4,7 +4,6 @@
 #include <Adafruit_SSD1306.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
@@ -48,6 +47,9 @@ void initTemperatureSond();
 void initBmeSensor();
 void initDisplay();
 void blinkRedLed(int count);
+void ledGreen();
+void ledBlue();
+void ledRed();
 
 void setup()
 {
@@ -61,9 +63,7 @@ void setup()
   initBmeSensor();
   initDisplay();
 
-  digitalWrite(LED_BLUE_PIN, HIGH);
-  digitalWrite(LED_RED_PIN, HIGH);
-  digitalWrite(LED_GREEN_PIN, LOW);
+  ledGreen();
 }
 
 void processButtonState();
@@ -76,40 +76,36 @@ void loop()
 
   actualTime = millis();
   diffTime = actualTime - savedTime;
+  bme.takeForcedMeasurement();
 
   if (showTemperature)
   {
     if (diffTime >= 500UL)
     {
-      digitalWrite(LED_BLUE_PIN, LOW);
-      digitalWrite(LED_GREEN_PIN, HIGH);
+      ledBlue();
 
       displayTemperatureScreen();
-
       savedTime = actualTime;
-      digitalWrite(LED_BLUE_PIN, HIGH);
-      digitalWrite(LED_GREEN_PIN, LOW);
+
+      ledGreen();
     }
   }
   else
   {
     if (diffTime >= 500UL)
     {
-      digitalWrite(LED_BLUE_PIN, LOW);
-      digitalWrite(LED_GREEN_PIN, HIGH);
+      ledBlue();
 
       displayPressureAndHumidityScreen();
 
       savedTime = actualTime;
-      digitalWrite(LED_BLUE_PIN, HIGH);
-      digitalWrite(LED_GREEN_PIN, LOW);
+      ledGreen();
     }
   }
 }
 
 void displayPressureAndHumidityScreen()
 {
-
   display.setCursor(0, 0); // Start at top-left corner
   display.clearDisplay();
 
@@ -150,8 +146,7 @@ void processButtonState()
 
   if (currentButtonState != lastButtonState)
   {
-    digitalWrite(LED_RED_PIN, LOW);
-    digitalWrite(LED_GREEN_PIN, HIGH);
+    ledRed();
     lastDebounceTime = millis();
     lastButtonState = currentButtonState;
   }
@@ -164,8 +159,7 @@ void processButtonState()
     }
 
     buttonState = currentButtonState;
-    digitalWrite(LED_RED_PIN, HIGH);
-    digitalWrite(LED_GREEN_PIN, LOW);
+    ledGreen();
   }
 }
 
@@ -175,6 +169,27 @@ void initPins()
   pinMode(LED_BLUE_PIN, OUTPUT);
   pinMode(LED_RED_PIN, OUTPUT);
   pinMode(LED_GREEN_PIN, OUTPUT);
+}
+
+void ledRed()
+{
+  digitalWrite(LED_RED_PIN, LOW);
+  digitalWrite(LED_GREEN_PIN, HIGH);
+  digitalWrite(LED_BLUE_PIN, HIGH);
+}
+
+void ledGreen()
+{
+  digitalWrite(LED_RED_PIN, HIGH);
+  digitalWrite(LED_GREEN_PIN, LOW);
+  digitalWrite(LED_BLUE_PIN, HIGH);
+}
+
+void ledBlue()
+{
+  digitalWrite(LED_RED_PIN, HIGH);
+  digitalWrite(LED_GREEN_PIN, HIGH);
+  digitalWrite(LED_BLUE_PIN, LOW);
 }
 
 void initTemperatureSond()
@@ -200,9 +215,14 @@ void initBmeSensor()
 {
   if (!bme.begin(0x76))
   {
-    //Serial.println("Could not find a valid BME280 sensor, check wiring!");
     blinkRedLed(2);
   }
+
+  bme.setSampling(Adafruit_BME280::MODE_FORCED,
+                  Adafruit_BME280::SAMPLING_X1,   // temperature
+                  Adafruit_BME280::SAMPLING_NONE, // pressure
+                  Adafruit_BME280::SAMPLING_X1,   // humidity
+                  Adafruit_BME280::FILTER_OFF);
 }
 
 void initDisplay()
