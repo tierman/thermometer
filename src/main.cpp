@@ -56,7 +56,9 @@ void setup()
   Serial.begin(9600);
   initPins();
 
-  digitalWrite(LED_BLUE_PIN, LOW);
+  ledBlue();
+  delay(500);
+
   blinkRedLed(1);
 
   initTemperatureSond();
@@ -78,29 +80,17 @@ void loop()
   diffTime = actualTime - savedTime;
   bme.takeForcedMeasurement();
 
-  if (showTemperature)
+  if (diffTime >= 500UL)
   {
-    if (diffTime >= 500UL)
-    {
-      ledBlue();
-
+    ledBlue();
+    if (showTemperature) {
       displayTemperatureScreen();
-      savedTime = actualTime;
-
-      ledGreen();
-    }
-  }
-  else
-  {
-    if (diffTime >= 500UL)
-    {
-      ledBlue();
-
+    } else {
       displayPressureAndHumidityScreen();
-
-      savedTime = actualTime;
-      ledGreen();
     }
+
+    savedTime = actualTime;
+    ledGreen();
   }
 }
 
@@ -169,6 +159,9 @@ void initPins()
   pinMode(LED_BLUE_PIN, OUTPUT);
   pinMode(LED_RED_PIN, OUTPUT);
   pinMode(LED_GREEN_PIN, OUTPUT);
+  digitalWrite(LED_GREEN_PIN, HIGH);
+  digitalWrite(LED_BLUE_PIN, HIGH);
+  digitalWrite(LED_RED_PIN, HIGH);
 }
 
 void ledRed()
@@ -204,9 +197,9 @@ void blinkRedLed(int count)
   while (i < count)
   {
     digitalWrite(LED_RED_PIN, LOW);
-    delay(1000);
+    delay(500);
     digitalWrite(LED_RED_PIN, HIGH);
-    delay(1000);
+    delay(500);
     ++i;
   }
 }
@@ -220,7 +213,7 @@ void initBmeSensor()
 
   bme.setSampling(Adafruit_BME280::MODE_FORCED,
                   Adafruit_BME280::SAMPLING_X1,   // temperature
-                  Adafruit_BME280::SAMPLING_NONE, // pressure
+                  Adafruit_BME280::SAMPLING_X1,   // pressure
                   Adafruit_BME280::SAMPLING_X1,   // humidity
                   Adafruit_BME280::FILTER_OFF);
 }
